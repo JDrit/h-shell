@@ -8,6 +8,7 @@ import Data.List.Split
 import Data.List
 import Data.Conduit.Process
 import System.Posix.IO
+import System.Posix.User
 import System.Exit
 
 cdCommand :: [String] -> IO ()
@@ -130,13 +131,15 @@ readRc filePath = do
     mapM exec (lines contents)
     hClose handle
 
+-- Makes the IO String prompt: "username" "directory"
 getPrompt_ :: IO (String)
 getPrompt_ = do
     pwd <- getCurrentDirectory
+    username <- getEffectiveUserName
     if pwd == "/" then
-        return ("/ > ")
+        return (username ++ " / > ")
     else
-        return (last (splitOn "/" pwd) ++ " > ")
+        return (username ++ " " ++ last (splitOn "/" pwd) ++ " > ")
 
 mainLoop :: IO ()
 mainLoop = do
@@ -145,6 +148,7 @@ mainLoop = do
     case input of
         Nothing -> return ()
         Just "exit" -> return ()
+        Just "quit" -> return ()
         Just "" -> mainLoop
         Just line -> do addHistory line
                         exec line
