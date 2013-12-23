@@ -3,6 +3,7 @@ import System.Console.Readline
 import System.Directory
 import System.IO
 import System.Process
+import System.Console.ANSI
 import Data.Maybe
 import Data.List.Split
 import Data.List
@@ -134,12 +135,17 @@ readRc filePath = do
 -- Makes the IO String prompt: "username" "directory"
 getPrompt_ :: IO (String)
 getPrompt_ = do
-    pwd <- getCurrentDirectory
+    cwd <- getCurrentDirectory
     username <- getEffectiveUserName
-    if pwd == "/" then
-        return (username ++ " / > ")
+    if cwd == "/" then
+        return (username ++ " \ESC[32m/ > \ESC[0m")
     else
-        return (username ++ " " ++ last (splitOn "/" pwd) ++ " > ")
+        return (username ++ 
+            " \ESC[32m" ++
+            (concat $ map ("/" ++) (tail $ splitOn "" (map head $ tail $ init $ splitOn "/" cwd))) ++ 
+            "/" ++
+            (last $ splitOn "/" cwd) ++
+            ">  \ESC[0m")
 
 mainLoop :: IO ()
 mainLoop = do
@@ -155,5 +161,6 @@ mainLoop = do
                         mainLoop
 
 main = do
+    setTitle "H-Shell"
     readRc ".shellrc"
     mainLoop
